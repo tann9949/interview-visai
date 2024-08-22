@@ -2,9 +2,9 @@
 Repository for conducting a prelim analysis on Thai criminal news.
 
 ## Usage
-## Scraping Criminal news
+### Scraping Criminal news
 To scrape the news from Thairath, run the following command:
-```python
+```bash
 python scrape.py --output-path /path/to/save/output.jsonl --amt 1000
 ```
 Here's the breakdown of each argument:
@@ -12,6 +12,12 @@ Here's the breakdown of each argument:
 |:-------|:--:|:--:|
 |`--output-path`|`str`|Path to saved output|
 |`--amt`|`int`|Amount to scrape|
+
+### Run LLM to extract information
+To extract additinoal information using the LLM, run the following command:
+```bash
+python scrape.py --input-path /path/to/scraped/news.jsonl --output-path /path/to/saved/file.jsonl
+```
 
 ## Author
 Skibidi Toilet
