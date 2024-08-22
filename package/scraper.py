@@ -95,6 +95,7 @@ class ThaiRathScraper(object):
                     content = future.result()
                     if content:
                         news.append({
+                            "url": item["canonical"],
                             "section": item["section"],
                             "topic": item["topic"],
                             "title": item["title"],
