@@ -24,7 +24,7 @@ def main(args: Namespace) -> None:
     os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
     with open(args.output_path, "w") as fp:
         for _n in news:
-            fp.write(json.dumps(_n)+"\n")
+            fp.write(json.dumps(_n, ensure_ascii=False)+"\n")
 
 
 if __name__ == "__main__":
