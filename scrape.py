@@ -15,16 +15,18 @@ def run_parser() -> Namespace:
     parser.add_argument("--amt", "-a", type=int, default=1_000, help="Number of scraped documents")
     return parser.parse_args()
 
-def main(args: Namespace) -> None:
-    # scrape
-    scraper = ThaiRathScraper()
-    news = scraper.scrape(amt=args.amt)
 
-    # save
-    os.makedirs(os.path.dirname(args.output_path), exist_ok=True)
+def save_news(news: list, output_path: str) -> None:
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(args.output_path, "w") as fp:
         for _n in news:
             fp.write(json.dumps(_n, ensure_ascii=False)+"\n")
+
+
+def main(args: Namespace) -> None:
+    scraper = ThaiRathScraper()
+    news = scraper.scrape(amt=args.amt)
+    save_news(news, args.output_path)
 
 
 if __name__ == "__main__":
