@@ -1,6 +1,10 @@
 # News Analysis ThaiRath
 Repository for conducting a prelim analysis on Thai criminal news.
 
+Here're the example files that is an output to the scripts:
+- [news.jsonl](https://drive.google.com/file/d/1UazCCSs8ShHySmsl5HC7I6qfiA6AosfY/view?usp=sharing)
+- [news_processed.jsonl](https://drive.google.com/file/d/1bv0FiG-JhYaLDrFjxYRbb6Va0m-kOPdA/view?usp=sharing)
+
 ## Usage
 ### Scraping Criminal news
 To scrape the news from Thairath, run the following command:
