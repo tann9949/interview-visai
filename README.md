@@ -19,5 +19,8 @@ To extract additinoal information using the LLM, run the following command:
 python scrape.py --input-path /path/to/scraped/news.jsonl --output-path /path/to/saved/file.jsonl
 ```
 
+## License
+This code is the property of [VISAI.AI Co., Ltd.](https://visai.ai/) and is provided for internal use only. Any distribution, copying, or modification of this code is strictly prohibited.
+
 ## Author
 Skibidi Toilet
