@@ -1,0 +1,11 @@
+# data
+data
+
+# cache
+**/__pycache__
+**/.ipynb*
+
+# env
+.env
+*.venv
+venv
