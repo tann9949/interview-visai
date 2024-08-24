@@ -7,11 +7,28 @@ from openai import OpenAI, NOT_GIVEN
 from tqdm.auto import tqdm
 
 from .prompting import NewsExtractionPromptManager
+from package.scraper import NewsDict
+from typing_extensions import TypedDict, NotRequired
 
 
-class ResponseType:
+class ResponseType: # NOTE: Consider using enums
     TEXT = "text"
     JSON = "json"
+
+
+class IncidentAddress(TypedDict):
+    name: NotRequired[str]
+    province: NotRequired[str]
+    district: NotRequired[str]
+    subdistrict: NotRequired[str]
+
+
+class NewsPostProcessDict(NewsDict):
+    crime_type: list[str]
+    num_victims: int
+    incident_datetime: str
+    incident_address: dict
+
 
 class NewsLLMExtractor(object):
 
@@ -19,8 +36,8 @@ class NewsLLMExtractor(object):
         self,
         seed: int = 42,
         temperature: float = 0.7,
-        model_name: str = "gpt-4o-mini",
-        max_retry: int = 3,
+        model_name: str = "gpt-4o-mini", # NOTE: Suggest parametizing this argument with `DEFAULT_MODEL_NAME``
+        max_retry: int = 3, # NOTE: Also, parametizing this to a CONSTRANCE
     ) -> None:
         self.seed = seed
         self.temperature = temperature
@@ -42,7 +59,7 @@ class NewsLLMExtractor(object):
         assert response_format in [ResponseType.JSON, ResponseType.TEXT], \
             f"Response format not supported, we only support json|text"
         
-        retry = 0
+        retry = 0 # Consider using module retry(https://pypi.org/project/retry/)
         while True:
             try:
                 completion = self._client.chat.completions.create(
@@ -62,14 +79,14 @@ class NewsLLMExtractor(object):
                 elif response_format == ResponseType.JSON:
                     response = json.loads(response)
                     assert isinstance(response, dict)
-                else:
+                else: # NOTE: I don't think this is reachable according to line 43
                     raise ValueError(f"No response format found: {response_format}")
                 
                 # break if API calls successfully
                 break
                 
             # retry until max_retry reached
-            except Exception as e:
+            except Exception as e: # NOTE: As mentioned at line 46
                 response = None
                 retry += 1
                 
@@ -81,7 +98,7 @@ class NewsLLMExtractor(object):
         return response
     
     def _get_extract_news_prompt(
-        self, 
+        self,
         title: str,
         abstract: str,
         content: str
@@ -116,7 +133,7 @@ class NewsLLMExtractor(object):
                     response_format=ResponseType.JSON
                 )
                 response = self.postprocess_llm_response(response)
-                break
+                break 
             except ValueError as e:
                 n_retries += 1
                 logging.warning(f"Can't validate output:\n{response}\nRetrying...")
@@ -132,7 +149,7 @@ class NewsLLMExtractor(object):
         results = []
 
         # Define a worker function to handle each news item
-        def extract_single_news(news_item):
+        def extract_single_news(news_item):  # NOTE: Function inside function will be hard for unit tests, consider put it outside + Add output type hint
             try:
                 return self.extract_news_info(news_item)
             except Exception as e:
@@ -145,7 +162,7 @@ class NewsLLMExtractor(object):
             future_to_news = {executor.submit(extract_single_news, news_item): news_item for news_item in news}
 
             # Use tqdm to track the progress of completed futures
-            for future in tqdm(futures.as_completed(future_to_news), total=len(news), desc="Extracting News Info"):
+            for future in tqdm(futures.as_completed(future_to_news), total=len(news), desc="Extracting News Info"):  # Consider to add an option to disable `tqdm`. Otherwise, it will cause log unreadble once deployed.
                 result = future.result()
                 if result:
                     results.append(result)

@@ -1,18 +1,32 @@
 import logging
 from concurrent import futures
 from datetime import datetime
-from typing import Optional, List, Dict
-
+from typing import Optional
 import requests
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from tqdm.auto import tqdm
 
+from typing_extensions import TypedDict
 
-class ThaiRathScraper(object):
-    
-    def __init__(self, num_worker: int = 5) -> None:  # Default num_worker to 5 for better performance
-        self.endpoint = "https://api.thairath.co.th/tr-api/v1.1/thairath-online"
+
+class NewsDict(TypedDict):
+    url: str
+    section: str
+    topic: str
+    title: str
+    abstract: str
+    content: str
+    publish_time: str
+
+
+# ENDPOINT = "https://api.thairath.co.th/tr-api/v1.1/thairath-online"
+
+
+class ThaiRathScraper(object): #  NOTE: Just `class ThaiRathScraper:` could be fine
+    # endpoint = ENDPOINT # Initial endpoint once the class is created
+    def __init__(self, num_worker: int = 5) -> None:  # Default num_worker to 5 for better performance # NOTE: Type `None` here is not needed for __init__ function we can assume it returns None
+        self.endpoint = "https://api.thairath.co.th/tr-api/v1.1/thairath-online" # FIXME: self.endpoint seems to be a constance we can initialize it once class is created.
         self.num_worker = num_worker
         
     def load_more(
@@ -31,7 +45,7 @@ class ThaiRathScraper(object):
     def is_div_content_candidate(self, div: Tag) -> bool:
         if not isinstance(div, Tag):
             return False
-        
+
         if "class" not in div.attrs:
             return False
         
@@ -69,6 +83,7 @@ class ThaiRathScraper(object):
         
     def get_news_content(self, url: str) -> Optional[str]:
         r = requests.get(url)
+        r.raise_for_status()  # Add Raise the connection error
         soup = BeautifulSoup(r.content, "html.parser")
         
         content = self.get_content_from_soup(soup)
@@ -78,10 +93,12 @@ class ThaiRathScraper(object):
     
     def scrape_page(
         self, 
-        ts: int = int(datetime.now().timestamp()), 
+        ts: Optional[int] = None, 
         amt: int = 100,
         page_no: Optional[int] = None
-    ) -> List[Dict]:
+    ) -> list[NewsDict]:  # NOTE: Editted from List[Dict]
+        if ts is None:
+            ts = int(datetime.now().timestamp())
         page = self.load_more(amt, ts=ts)["items"]
         
         news = []
@@ -108,21 +125,56 @@ class ThaiRathScraper(object):
         
         return news
     
-    def _update_min_ts(self, news: list, offset: int = 1) -> int:
+    @staticmethod  # NOTE: If self is not used, replace this method with static method
+    def _update_min_ts(news: list[NewsDict], offset: int = 1) -> int:
         ts = list(map(
-            lambda _n: datetime.strptime(_n["publish_time"], "%Y-%m-%dT%H:%M:%S.%fZ").timestamp(),
+            # lambda _n: datetime.strptime(_n["publish_time"], "%Y-%m-%dT%H:%M:%S.%fZ").timestamp(), # NOTE: Time zone awareness. As the datetime is already in UTC, we can just use the `datetime.fromisoformat` function. This preserves timezone notation.
+            lambda _n: datetime.fromisoformat(_n["publish_time"]).timestamp(),
             news
         ))
         ts = min(ts) - offset
         return ts
+
+    @staticmethod
+    def _update_min_ts_suggest_edit(news: list[NewsDict], offset: int = 1) -> int: # Suggest edit
+        """Update minimum timestamp.
+
+        NOTE: The format datetime in ISO8601 format.
+        Therefore, they can be compared with in stirng format.
+
+        Args:
+            news (list[NewsDict]): _description_
+            offset (int, optional): _description_. Defaults to 1.
+
+        Returns:
+            int: _description_
+        """
+        min_datetime = min(metadata["publish_time"] for metadata in news)
+        min_ts = datetime.fromisoformat(min_datetime).timestamp()
+        ts = min_ts - offset
+        return ts
     
-    def scrape(self, amt: int) -> list:
-        page_no = 1
-        news = self.scrape_page(amt=amt, page_no=page_no)
-        page_no += 1
+    def scrape(self, amt: int) -> list[NewsDict]:
+        page_no = 1 # FIXME: Unnecessary variable declaration
+        news = self.scrape_page(amt=amt, page_no=page_no) # FIXME: Can be `news = self.scrape_page(amt=amt, page_no=1)`
+        page_no += 1 # FIXME: `page_no = 2`
 
         while len(news) < amt:
             ts = self._update_min_ts(news)
             news.extend(self.scrape_page(ts=ts, page_no=page_no))
             page_no += 1
         return news
+
+# NOTE: Add Docstring for each function will be helpful for reader.
+# NOTE: Use code linter will be helpful for align coding standards
+# NOTE: Using TypeDict for Dict typing
+
+def test_update_min_ts():
+    samples = [
+        {"publish_time": "2024-01-03T00:00:00.00Z"},
+        {"publish_time": "2024-01-02T00:00:00.00Z"},
+        {"publish_time": "2024-01-01T00:00:00.00Z"}
+    ]
+
+    assert ThaiRathScraper._update_min_ts(samples) == ThaiRathScraper._update_min_ts_suggest_edit(samples)
+
