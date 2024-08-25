@@ -27,7 +27,7 @@ class NewsPostProcessDict(NewsDict):
     crime_type: list[str]
     num_victims: int
     incident_datetime: str
-    incident_address: dict
+    incident_address: IncidentAddress
 
 
 class NewsLLMExtractor(object):
@@ -146,6 +146,15 @@ class NewsLLMExtractor(object):
         return news
     
     def batch_extract(self, news: list, num_workers: int = 5) -> list:
+        """Batch Extract news into a list of news.
+
+        Args:
+            news (list): _description_
+            num_workers (int, optional): _description_. Defaults to 5.
+
+        Returns:
+            list: _description_
+        """
         results = []
 
         # Define a worker function to handle each news item

@@ -8,6 +8,7 @@ from bs4.element import Tag
 from tqdm.auto import tqdm
 
 from typing_extensions import TypedDict
+from abc import ABC, abstractmethod
 
 
 class NewsDict(TypedDict):
@@ -21,9 +22,15 @@ class NewsDict(TypedDict):
 
 
 # ENDPOINT = "https://api.thairath.co.th/tr-api/v1.1/thairath-online"
+class Scraper(ABC):
+    @abstractmethod
+    def scrape(self, amt: int) -> list[NewsDict]:
+        pass
+    def get_news_content(self, url: str) -> list[NewsDict]:
+        pass
 
 
-class ThaiRathScraper(object): #  NOTE: Just `class ThaiRathScraper:` could be fine
+class ThaiRathScraper(Scraper): #  NOTE: Just `class ThaiRathScraper:` could be fine
     # endpoint = ENDPOINT # Initial endpoint once the class is created
     def __init__(self, num_worker: int = 5) -> None:  # Default num_worker to 5 for better performance # NOTE: Type `None` here is not needed for __init__ function we can assume it returns None
         self.endpoint = "https://api.thairath.co.th/tr-api/v1.1/thairath-online" # FIXME: self.endpoint seems to be a constance we can initialize it once class is created.
@@ -128,7 +135,6 @@ class ThaiRathScraper(object): #  NOTE: Just `class ThaiRathScraper:` could be f
     @staticmethod  # NOTE: If self is not used, replace this method with static method
     def _update_min_ts(news: list[NewsDict], offset: int = 1) -> int:
         ts = list(map(
-            # lambda _n: datetime.strptime(_n["publish_time"], "%Y-%m-%dT%H:%M:%S.%fZ").timestamp(), # NOTE: Time zone awareness. As the datetime is already in UTC, we can just use the `datetime.fromisoformat` function. This preserves timezone notation.
             lambda _n: datetime.fromisoformat(_n["publish_time"]).timestamp(),
             news
         ))
