@@ -28,3 +28,6 @@ This code is the property of [VISAI.AI Co., Ltd.](https://visai.ai/) and is prov
 
 ## Author
 Skibidi Toilet
+
+## Editor
+Camera man

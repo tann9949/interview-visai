@@ -1,10 +1,10 @@
 from jinja2 import Environment, PackageLoader
 
 
-class NewsExtractionPromptManager(object):
+class NewsExtractionPromptManager(object):  # NOTE: (object) is not needed
 
-    def __init__(self) -> None:
-        self.manager = prompt_manager = Environment(
+    def __init__(self) -> None:  # NOTE: `None` is not needed
+        self.manager = prompt_manager = Environment(  # NOTE: the variable `prompt_manager` is not needed
             loader=PackageLoader("package", package_path="prompting/templates")
         )
 
